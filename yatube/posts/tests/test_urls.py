@@ -110,3 +110,7 @@ class PostsURLTests(TestCase):
                 url = reverse(url_name, kwargs=url_kwargs)
                 response = client.get(url)
                 self.assertEqual(response.status_code, expected_status_code)
+
+    def test_page_404(self):
+        response = self.guest_client.get('/unexisted/')
+        self.assertEqual(response.status_code, 404)
