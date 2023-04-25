@@ -107,6 +107,11 @@ class PostViewsTests(TestCase):
         response_3 = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(response.content, response_3.content)
 
+    def test_error_page(self):
+        response = self.client.get('/nonexist-page/')
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, 'core/404.html')
+
 
 class FollowTests(TestCase):
     @classmethod
