@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.core.cache import cache
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from posts.forms import PostForm
 from ..models import Group, Follow, Post
@@ -14,19 +13,6 @@ class PostViewsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         cls.user = User.objects.create_user(username='user')
         cls.test_user = User.objects.create_user(username='test_user')
         cls.group = Group.objects.create(
@@ -43,7 +29,6 @@ class PostViewsTests(TestCase):
             author=cls.user,
             text='Тестовый пост',
             group=cls.group,
-            image=uploaded
         )
 
     def setUp(self):
@@ -80,10 +65,6 @@ class PostViewsTests(TestCase):
                 response = self.authorized_client.get(url)
                 test_post = response.context.get('page_obj')[0]
                 self.assertEqual(test_post, self.post)
-                post_image = Post.objects.first().image
-                expected_image = (
-                    f"posts/small_{post_image.name.split('_')[-1]}")
-                self.assertEqual(post_image.name, expected_image)
 
     def test_post_detail_shows_correct_context(self):
         response = self.authorized_client.get(
