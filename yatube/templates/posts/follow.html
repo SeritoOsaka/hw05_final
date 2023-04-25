@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+  {% block title %}
+    Мои подписки
+  {% endblock %}
+  {% block content %} 
+  {% include 'includes/switcher.html' %}
+    <div class="container py-5">      
+      <h1>Последние обновления моих подписок</h1>
+      {% for post in page_obj %}
+          {% include 'includes/post_item.html' %}
+      {% endfor %}
+      {% include 'includes/paginator.html' %}
+    </div>
+  {% endblock %}
