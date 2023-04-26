@@ -26,6 +26,7 @@ class PostsURLTests(TestCase):
             "post_detail": f'/posts/{PostsURLTests.post.id}/',
             "post_edit": f'/posts/{PostsURLTests.post.id}/edit/',
             "post_create": '/create/',
+            'follow_index': reverse('posts:follow_index'),
         }
 
     def setUp(self):
@@ -45,6 +46,7 @@ class PostsURLTests(TestCase):
             ("post_edit", reverse("posts:post_edit",
                                   args=[PostsURLTests.post.id])),
             ("post_create", "/create/"),
+            ("follow_index", reverse("posts:follow_index")),
         ]
         for name, url in urls_names:
             with self.subTest(name=name):
@@ -83,6 +85,7 @@ class PostsURLTests(TestCase):
             (reverse("posts:post_create"), 'posts/post_create.html'),
             (reverse("posts:post_edit", kwargs={"post_id": self.post.id}),
              'posts/post_create.html'),
+            (reverse("posts:follow_index"), 'posts/follow.html')
         ]
         for address, template in templates_url_names:
             with self.subTest(address=address):
@@ -104,6 +107,7 @@ class PostsURLTests(TestCase):
              {"post_id": self.post.id}, 200, self.authorized_client),
             ("posts:group_list",
              {"slug": self.group.slug + "x"}, 404, self.guest_client),
+            ("posts:follow_index", {}, 200, self.authorized_client),
         ]
         for url_name, url_kwargs, expected_status_code, client in urls:
             with self.subTest(url_name=url_name, url_kwargs=url_kwargs):

@@ -56,6 +56,7 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.last()
+        self.assertIsNotNone(post.image)
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, PostCreateFormTests.user)
         self.assertEqual(post.text, form_data['text'])
@@ -97,21 +98,20 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(edit_post.author, self.post.author)
         self.assertEqual(edit_post.text, form_data['text'])
 
-    def test_comment(self):
+    def test_add_comment(self):
         comments_count = Comment.objects.count()
         form_data = {
-            'post': self.post,
-            'author': self.user,
-            'text': 'text',
+            'text': 'Test comment',
         }
         response = self.authorized_client.post(
             reverse('posts:add_comment', args=(self.post.id,)),
             data=form_data,
             follow=True,
         )
-        self.assertRedirects(response, reverse(
-            'posts:post_detail', args=(self.post.id,)))
+        self.assertRedirects(response, reverse('posts:post_detail',
+                                               args=(self.post.id,)))
         self.assertEqual(Comment.objects.count(), comments_count + 1)
-        self.assertTrue(Comment.objects.filter(
-            text='text',
-            author=self.user,).exists())
+        comment = Comment.objects.last()
+        self.assertEqual(comment.post.id, self.post.id)
+        self.assertEqual(comment.text, form_data['text'])
+        self.assertEqual(comment.author, self.user)

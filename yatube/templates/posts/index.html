@@ -6,14 +6,16 @@
 
 {% block content %}
   {% load cache %}
-  {% cache 20 index_page with page_obj %}
-  {% include 'includes/switcher.html' %}
-  {% for post in page_obj %}
-  {% include "includes/post_item.html" with post=post hide_author_link=False show_group_link=True %}
-    {% if not forloop.last %}
-      <hr>
-    {% endif %}
-  {% endfor %}
-  {% endcache %}
+  {% with active_tab="Все авторы" %}
+    {% include 'includes/switcher.html' %}
+    {% cache 20 'index'|add:page_obj.number %}
+      {% for post in page_obj %}
+        {% include "includes/post_item.html" with post=post hide_author_link=False show_group_link=True %}
+        {% if not forloop.last %}
+          <hr>
+        {% endif %}
+      {% endfor %}
+    {% endcache %}
+  {% endwith %}
   {% include 'includes/paginator.html' %}
 {% endblock %}

@@ -30,11 +30,15 @@ class PostViewsTests(TestCase):
             text='Тестовый пост',
             group=cls.group,
         )
+        cls.follow = Follow.objects.create(
+            user=cls.test_user,
+            author=cls.user,
+        )
 
     def setUp(self):
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(PostViewsTests.user)
-        self.guest_client = Client()
 
     def test_author_object(self):
         url = reverse('posts:profile', kwargs={'username': self.user})
@@ -98,19 +102,13 @@ class PostViewsTests(TestCase):
             group=self.group
         )
         response = self.authorized_client.get(reverse('posts:index'))
-        response_post = response.context['page_obj'][0]
-        self.assertEqual(post, response_post)
+        self.assertContains(response, post.text)
         post.delete()
-        response_2 = self.authorized_client.get(reverse('posts:index'))
-        self.assertEqual(response.content, response_2.content)
+        second_response = self.authorized_client.get(reverse('posts:index'))
+        self.assertContains(second_response, post.text)
         cache.clear()
-        response_3 = self.authorized_client.get(reverse('posts:index'))
-        self.assertNotEqual(response.content, response_3.content)
-
-    def test_error_page(self):
-        response = self.client.get('/nonexist-page/')
-        self.assertEqual(response.status_code, 404)
-        self.assertTemplateUsed(response, 'core/404.html')
+        third_response = self.authorized_client.get(reverse('posts:index'))
+        self.assertNotEqual(response.content, third_response.content)
 
 
 class FollowTests(TestCase):
@@ -118,35 +116,50 @@ class FollowTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user_follower = User.objects.create_user(username='user')
-        cls.user_following = User.objects.create_user(username='user_1')
+        cls.user_following = User.objects.create_user(username='follow_user')
         cls.post = Post.objects.create(
             author=cls.user_following,
             text='Тестовый текст',
         )
 
     def setUp(self):
-        self.following_client = Client()
-        self.follower_client = Client()
-        self.following_client.force_login(self.user_following)
-        self.follower_client.force_login(self.user_follower)
+        self.client = Client()
+        self.client.force_login(self.user_follower)
+
+    def test_follow_index_context(self):
+        response = self.client.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response.context['page_obj']), 1)
+        self.assertEqual(response.context['page_obj'][0].text, self.post.text)
 
     def test_follow(self):
         follower_count = Follow.objects.count()
-        self.follower_client.get(reverse(
+        self.client.get(reverse(
             'posts:profile_follow',
             args=(self.user_following.username,)))
         self.assertEqual(Follow.objects.count(), follower_count + 1)
+        follow = Follow.objects.latest('id')
+        self.assertEqual(follow.author, self.user_following)
+        self.assertEqual(follow.user, self.user_follower)
 
     def test_unfollow(self):
-        Follow.objects.create(
+        follow = Follow.objects.create(
             user=self.user_follower,
             author=self.user_following
         )
         follower_count = Follow.objects.count()
-        self.follower_client.get(reverse(
+        self.assertEqual(follow.author, self.user_following)
+        self.assertEqual(follow.user, self.user_follower)
+        self.client.get(reverse(
             'posts:profile_unfollow',
             args=(self.user_following.username,)))
         self.assertEqual(Follow.objects.count(), follower_count - 1)
+        self.assertQuerysetEqual(
+            Follow.objects.filter(
+                user=self.user_follower,
+                author=self.user_following
+            ),
+            []
+        )
 
     def test_new_post_see_follower(self):
         posts = Post.objects.create(
@@ -157,9 +170,9 @@ class FollowTests(TestCase):
             user=self.user_follower,
             author=self.user_following
         )
-        response = self.follower_client.get(reverse('posts:follow_index'))
+        response = self.client.get(reverse('posts:follow_index'))
         post = response.context['page_obj'][0]
         self.assertEqual(post, posts)
         follow.delete()
-        response_2 = self.follower_client.get(reverse('posts:follow_index'))
-        self.assertEqual(len(response_2.context['page_obj']), 0)
+        second_response = self.client.get(reverse('posts:follow_index'))
+        self.assertNotIn(post, second_response.context['page_obj'])

@@ -23,7 +23,7 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         expected_str = [
-            (self.post, self.post.text[:Post.FIRST_FIFTEEN_CHARACTERS]),
+            (self.post, self.post.text),
             (self.group, self.group.title)
         ]
 
