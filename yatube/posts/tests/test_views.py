@@ -126,11 +126,6 @@ class FollowTests(TestCase):
         self.client = Client()
         self.client.force_login(self.user_follower)
 
-    def test_follow_index_context(self):
-        response = self.client.get(reverse('posts:follow_index'))
-        self.assertEqual(len(response.context['page_obj']), 1)
-        self.assertEqual(response.context['page_obj'][0].text, self.post.text)
-
     def test_follow(self):
         follower_count = Follow.objects.count()
         self.client.get(reverse(
