@@ -56,7 +56,7 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.last()
-        self.assertIsNotNone(post.image)
+        self.assertIsNotNone(post.image, form_data['image'])
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, PostCreateFormTests.user)
         self.assertEqual(post.text, form_data['text'])
@@ -99,7 +99,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(edit_post.text, form_data['text'])
 
     def test_add_comment(self):
-        comments_count = Comment.objects.count()
+        Comment.objects.all().delete()
         form_data = {
             'text': 'Test comment',
         }
@@ -110,7 +110,7 @@ class PostCreateFormTests(TestCase):
         )
         self.assertRedirects(response, reverse('posts:post_detail',
                                                args=(self.post.id,)))
-        self.assertEqual(Comment.objects.count(), comments_count + 1)
+        self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.last()
         self.assertEqual(comment.post.id, self.post.id)
         self.assertEqual(comment.text, form_data['text'])

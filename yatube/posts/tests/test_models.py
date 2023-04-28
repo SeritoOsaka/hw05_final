@@ -23,13 +23,12 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         expected_str = [
-            (self.post, self.post.text),
+            (self.post, self.post.text[:Post.FIRST_FIFTEEN_CHARACTERS]),
             (self.group, self.group.title)
         ]
-
-        for model, expected in expected_str:
-            with self.subTest(model=model):
-                self.assertEqual(str(model), expected)
+        for value, expected in expected_str:
+            with self.subTest(value=value):
+                self.assertEqual(str(value), expected)
 
     def test_field_verbose(self):
         post = self.post

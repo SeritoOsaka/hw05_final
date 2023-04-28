@@ -6,9 +6,8 @@
 
 {% block content %}
   {% load cache %}
-  {% with active_tab="Все авторы" %}
-    {% include 'includes/switcher.html' %}
-    {% cache 20 'index'|add:page_obj.number %}
+  {% include 'includes/switcher.html' with active_tab='Все авторы' %}
+      {% cache 20 'index' page_obj.number %}
       {% for post in page_obj %}
         {% include "includes/post_item.html" with post=post hide_author_link=False show_group_link=True %}
         {% if not forloop.last %}
@@ -16,6 +15,5 @@
         {% endif %}
       {% endfor %}
     {% endcache %}
-  {% endwith %}
   {% include 'includes/paginator.html' %}
 {% endblock %}
