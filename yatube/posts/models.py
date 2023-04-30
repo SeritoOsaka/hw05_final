@@ -20,11 +20,7 @@ class Post(models.Model):
                               verbose_name='Группа статей',
                               help_text='Выберите тематическую группу '
                                         'в выпадающем списке по желанию')
-    image = models.ImageField(
-        'Картинка',
-        upload_to='posts/',
-        blank=True
-    )
+    image = models.ImageField(upload_to='posts/', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Статья'

@@ -3,7 +3,7 @@
     <ul class="nav nav-tabs">
       <li class="nav-item">
         <a 
-          class="nav-link {% if index %}active{% endif %}"
+        class="nav-link {% if active_tab == 'Все авторы' %}active{% endif %}"
           href="{% url 'posts:index' %}"
         >
           Все авторы

@@ -7,7 +7,7 @@
 {% block content %}
   {% load cache %}
   {% include 'includes/switcher.html' with active_tab='Все авторы' %}
-      {% cache 20 'index' page_obj.number %}
+      {% cache 20 index page_obj.number %}
       {% for post in page_obj %}
         {% include "includes/post_item.html" with post=post hide_author_link=False show_group_link=True %}
         {% if not forloop.last %}

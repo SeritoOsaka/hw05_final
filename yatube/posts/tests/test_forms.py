@@ -17,7 +17,7 @@ class PostCreateFormTests(TestCase):
         cls.post = Post.objects.create(
             text='Test text',
             author=cls.user,
-            group=cls.group
+            group=cls.group,
         )
 
     def setUp(cls):

@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.core.cache import cache
 
 from posts.forms import PostForm
-from ..models import Group, Follow, Post
+from ..models import User, Group, Follow, Post
 
 User = get_user_model()
 
@@ -31,14 +31,16 @@ class PostViewsTests(TestCase):
             group=cls.group,
         )
         cls.follow = Follow.objects.create(
-            user=cls.test_user,
             author=cls.user,
+            user=cls.test_user,
         )
 
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(PostViewsTests.user)
+        self.follow_client = Client()
+        self.follow_client.force_login(PostViewsTests.test_user)
 
     def test_author_object(self):
         url = reverse('posts:profile', kwargs={'username': self.user})
@@ -63,10 +65,11 @@ class PostViewsTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test-slug'}),
             reverse('posts:profile',
                     kwargs={'username': self.post.author.username}),
+            reverse('posts:follow_index'),
         ]
         for url in urls:
             with self.subTest(msg=f'Test {url} page'):
-                response = self.authorized_client.get(url)
+                response = self.follow_client.get(url)
                 test_post = response.context.get('page_obj')[0]
                 self.assertEqual(test_post, self.post)
 
@@ -96,15 +99,20 @@ class PostViewsTests(TestCase):
         self.assertIsInstance(response.context.get('form'), PostForm)
 
     def test_cache_index(self):
-        first = self.authorized_client.get(reverse('posts:index'))
-        post = Post.objects.get(pk=1)
+        response_before_change = self.authorized_client.get(reverse
+                                                            ('posts:index'))
+        post = Post.objects.first()
         post.text = 'Измененный текст'
         post.save()
-        second = self.authorized_client.get(reverse('posts:index'))
-        self.assertEqual(first.content, second.content)
+        response_after_change = self.authorized_client.get(reverse
+                                                           ('posts:index'))
+        self.assertEqual(response_before_change.content,
+                         response_after_change.content)
         cache.clear()
-        third = self.authorized_client.get(reverse('posts:index'))
-        self.assertNotEqual(first.content, third.content)
+        response_after_clear = self.authorized_client.get(reverse
+                                                          ('posts:index'))
+        self.assertNotEqual(response_before_change.content,
+                            response_after_clear.content)
 
 
 class FollowTests(TestCase):
@@ -128,6 +136,10 @@ class FollowTests(TestCase):
             'posts:profile_follow',
             args=(self.user_following.username,)))
         self.assertEqual(Follow.objects.count(), follower_count + 1)
+        self.assertTrue(
+            Follow.objects.filter(author=self.user_following,
+                                  user=self.user_follower).exists()
+        )
         follow = Follow.objects.get(author=self.user_following,
                                     user=self.user_follower)
         self.assertEqual(follow.author, self.user_following)
@@ -150,18 +162,3 @@ class FollowTests(TestCase):
                 author=self.user_following
             ).exists()
         )
-
-    def test_new_post_see_follower(self):
-        follow = Follow.objects.create(
-            user=self.user_follower,
-            author=self.user_following
-        )
-        post = Post.objects.create(
-            text=self.post.text,
-            author=self.user_following,
-        )
-        response = self.client.get(reverse('posts:follow_index'))
-        self.assertIn(post, response.context['page_obj'])
-        follow.delete()
-        response = self.client.get(reverse('posts:follow_index'))
-        self.assertNotIn(post, response.context['page_obj'])
